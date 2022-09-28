@@ -18,9 +18,8 @@ $ host 192.168.39.88
 Note: to avoid problems, try and use different nodes for nfs-ganesha and for the krb5 server
 
 3) Create principal for the test machine and write it to the keytab
-kadmin -p root/admin -w redhat123:
-	addprinc -randkey nfs/$HOSTNAME
-	ktadd nfs/$HOSTNAME
+kadmin -p root/admin -w redhat123 addprinc -randkey nfs/$HOSTNAME
+kadmin -p root/admin -w redhat123 ktadd nfs/$HOSTNAME
 
 4) Setup debugging for rpc.gssd and enable the service
 $ cat /etc/sysconfig/nfs
@@ -28,9 +27,9 @@ SECURE_NFS="yes"
 RPCGSSDARGS="-vvv"
 RPCSVCGSSDARGS="-vvv"
 
-$ systemctl enable nfs-client
-$ systemctl start nfs-client.target
+systemctl enable nfs-client
+systemctl start nfs-client.target
 
 5) Mount the share in the following manner
- # mount -v -t nfs -o sec=krb5,vers=4.1,port=30049 nfs-ganesha:/exports /mnt
+mount -v -t nfs -o sec=krb5,vers=4.1,port=30049 nfs-ganesha:/exports /mnt
 
