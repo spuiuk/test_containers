@@ -33,3 +33,6 @@ systemctl start nfs-client.target
 5) Mount the share in the following manner
 mount -v -t nfs -o sec=krb5,vers=4.1,port=30049 nfs-ganesha:/exports /mnt
 
+
+If encounter access denied errors while mounting shares using krb5, especially if you have recreated the nfs server, you may have to clear the existing krb5 cache before you can mount the share.
+rm /tmp/krb5ccmachine_DEFAULT.SVC.CLUSTER.LOCAL
