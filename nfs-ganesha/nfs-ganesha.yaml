@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nfs-ganesha
+spec:
+  selector:
+    app: nfs-ganesha
+  ports:
+  - name: nfsd
+    port: 2049
+    targetPort: 2049
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nfsd-ext
+  labels:
+    app: nfs-ganesha
+spec:
+  type: NodePort
+  ports:
+    - port: 2049
+      nodePort: 30049
+  selector:
+    app: nfs-ganesha
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: krb5-conf-nfs-ganesha
+  labels:
+    app: nfs-ganesha
+spec:
+  storageClassName: rook-cephfs
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfsd-data
+  labels:
+    app: nfs-ganesha
+spec:
+  storageClassName: rook-cephfs
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nfs-ganesha
+  labels:
+    app: nfs-ganesha
+spec:
+  containers:
+    - name: nfs-ganesha
+      image: quay.io/spuiuk/nfs-ganesha
+      securityContext:
+        privileged: true
+      ports:
+        - containerPort: 2049
+          name: nfsd
+          protocol: TCP
+        - containerPort: 2049
+          name: nfsdu
+          protocol: UDP
+      volumeMounts:
+        - mountPath: "/krb5-conf/"
+          name: krb5-conf
+        - mountPath: "/exports"
+          name: nfsd-data
+      #command:
+        #- "sleep"
+        #- "36000"
+      env:
+        - name: ACCESS_TYPE
+          value: "RW"
+        - name: TRANSPORTS
+          value: "TCP"
+        - name: SQUASH_MODE
+          value: "none"
+        - name: PROTOCOLS
+          value: "4"
+        - name: IDMAP_DOMAIN
+          value: "default.svc.cluster.local"
+        - name: SEC_TYPE
+          value: "sys,krb5"
+        - name: LOG_LEVEL
+          value: "FULL_DEBUG"
+  initContainers:
+    - name: exportspermission
+      image: alpine:3
+      command:
+        - chmod
+        - "0777"
+        - /exports
+      volumeMounts:
+        - mountPath: "/exports"
+          name: nfsd-data
+    - name: krb5-helper
+      image: quay.io/spuiuk/krb5-helper
+      env:
+        - name: "ADD_PRINC"
+          value: "nfs/nfs-ganesha"
+      volumeMounts:
+        - mountPath: "/krb5-conf/"
+          name: krb5-conf
+  volumes:
+    - name: krb5-conf
+      persistentVolumeClaim:
+        claimName: krb5-conf-nfs-ganesha
+    - name: nfsd-data
+      persistentVolumeClaim:
+        claimName: nfsd-data
+
+
