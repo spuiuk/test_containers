@@ -1,0 +1,23 @@
+container_name=krb5-server
+image_name=krb5-server
+cmd="podman"
+
+if ! $cmd ps -a --filter name=$container_name|grep $container_name
+then
+	$cmd run -it \
+	--name $container_name \
+	--hostname=$container_name \
+	--volume ./krb5-conf:/krb5-conf \
+	--volume ./krb5kdc:/var/kerberos/krb5kdc \
+	$image_name
+	#--entrypoint /bin/bash \
+elif $cmd ps|grep $container_name 2>/dev/null
+then
+	$cmd exec -it $container_name /bin/bash
+
+else
+	$cmd start $container_name
+	$cmd attach $container_name
+
+fi
+
