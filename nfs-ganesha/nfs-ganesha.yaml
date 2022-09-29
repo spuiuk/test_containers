@@ -72,10 +72,10 @@ spec:
           name: nfsdu
           protocol: UDP
       volumeMounts:
-        - mountPath: "/krb5-conf/"
-          name: krb5-conf
         - mountPath: "/exports"
           name: nfsd-data
+        - mountPath: "/krb5-conf/"
+          name: krb5-conf
       #command:
         #- "sleep"
         #- "36000"
@@ -104,12 +104,16 @@ spec:
       volumeMounts:
         - mountPath: "/exports"
           name: nfsd-data
+        - mountPath: "/krb5-conf/"
+          name: krb5-conf
     - name: krb5-helper
       image: quay.io/spuiuk/krb5-helper
       env:
         - name: "ADD_PRINC"
           value: "nfs/nfs-ganesha"
       volumeMounts:
+        - mountPath: "/exports"
+          name: nfsd-data
         - mountPath: "/krb5-conf/"
           name: krb5-conf
   volumes:
